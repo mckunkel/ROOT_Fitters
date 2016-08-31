@@ -35,7 +35,7 @@
 
 //This is in the root directory and as of May 15 2012, is the final version
 
-void linfitMKDoubleGaus(TH1F *h33 , Double_t low, Double_t high, Double_t p0, Double_t p1, Double_t initialPar, Double_t width, Double_t factor, Int_t draw_opt){
+void linfitMKDoubleGaus(TH1 *h33 , Double_t low, Double_t high, Double_t p0, Double_t p1, Double_t initialPar, Double_t width, Double_t factor, Int_t draw_opt){
 
   double nEnt = h33->GetEntries();
   TF1 *fitter = new TF1("fitter","gaus(0) + gaus(3) + [6] + [7]*x",low,high);
@@ -91,28 +91,28 @@ double sigmaError = fitter->GetParError(5);
 TLatex *sum = new TLatex(startx*0.83, starty,Form("Yield: %i",yield));
 TLatex *sum12 = new TLatex(startx*0.83, starty*0.84,Form("Background: %i",bckgd));
 TLatex *sum0=new TLatex(startx*0.83, starty0,Form("Range: #pm %2.1f #sigma",factor));
-TLatex *sum2=new TLatex(startx*0.83, starty2,Form("Mean:%4.4f #pm %.4f GeV",par[4], meanError));
+TLatex *sum2=new TLatex(startx*0.83, starty2,Form("Mean:%3.3f #pm %.3f",par[4], meanError));
 TLatex *sum3=new TLatex(startx*0.83, starty3,Form("#sigma:%5.4f #pm %.4f GeV",par[5], sigmaError));
 TLatex *ra = new TLatex(startx*0.83, starty*0.6,Form("#frac{S}{S+B}= %.3f", ratio));
 sum->SetTextSize(0.04);
 sum->SetTextColor(2);
-sum->Draw("same");
+//sum->Draw("same");
 sum12->SetTextSize(0.04);
 sum12->SetTextColor(6);
-sum12->Draw("same");
+//sum12->Draw("same");
 
-ra->Draw("same");
+//ra->Draw("same");
 
 
 sum0->SetTextSize(0.04);
 sum0->SetTextColor(2);
-sum0->Draw("same");
+//sum0->Draw("same");
 sum2->SetTextSize(0.04);
 sum2->SetTextColor(4);
 sum2->Draw("same");
 sum3->SetTextSize(0.04);
 sum3->SetTextColor(4);
-sum3->Draw("same");
+//sum3->Draw("same");
   }
   
 //  h33->GetXaxis()->SetTitle("M(e^{+}e^{-}#gamma) [GeV]");

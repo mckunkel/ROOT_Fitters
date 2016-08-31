@@ -87,24 +87,24 @@ Double_t startx=x->GetXmin()+0.75*(x->GetXmax()-x->GetXmin());
     TLatex *ra = new TLatex(startx*0.93, starty0,Form("#frac{S}{S+B}= %.1f", ratio));
 
     
-    sum->SetTextSize(0.04);
+    sum->SetTextSize(0.03);
     sum->SetTextColor(2);
     sum->Draw("same");
-    sum12->SetTextSize(0.04);
+    sum12->SetTextSize(0.03);
     sum12->SetTextColor(6);
     sum12->Draw("same");
     
-    ra->SetTextSize(0.04);
+    ra->SetTextSize(0.03);
     ra->Draw("same");
     
     
-    sum0->SetTextSize(0.04);
+    sum0->SetTextSize(0.03);
     sum0->SetTextColor(2);
     sum0->Draw("same");
-    sum2->SetTextSize(0.04);
+    sum2->SetTextSize(0.03);
     sum2->SetTextColor(4);
     sum2->Draw("same");
-    sum3->SetTextSize(0.04);
+    sum3->SetTextSize(0.03);
     sum3->SetTextColor(4);
     sum3->Draw("same");
     
