@@ -27,103 +27,60 @@
 
 //This is in the root directory and as of May 15 2012, is the final version
 
-class Chebyshev {
-public:
-  Chebyshev(int n, double xmin, double xmax) :
-  fA(xmin), fB(xmax),
-  fT(std::vector<double>(n) )  {}
-  
-  double operator() (const double * xx, const double *p) {
-    double x = (xx[0] - fA -fB)/(fB-fA);
-    int order = fT.size();
-    if (order == 1) return p[0];
-    if (order == 2) return p[0] + x*p[1];
-    // build the polynomials
-    fT[0] = 1;
-    fT[1] = x;
-    for (int i = 1; i< order; ++i) {
-      fT[i+1] =  2 *x * fT[i] - fT[i-1];
-    }
-    double sum = p[0]*fT[0];
-    for (int i = 1; i<= order; ++i) {
-      sum += p[i] * fT[i];
-    }
-    return sum;
-  }
-  
-private:
-  double fA;
-  double fB;
-  std::vector<double> fT; // polynomial
-  std::vector<double> fC; // coefficients
-};
-
-
-double CBshape (double *x, double *p ) {
+Double_t GaussExp (double *x, double *p ) {
   //x[0] x
-  //p[0] mean
-  //p[1] sigma
-  //p[2] alpha
-  //p[3] n
-  //p[4] normalization
+  //p[0] mean  represents the mean of the Gaussian core
+  //p[1] sigma represents the standard deviation of the Gaussian core
+  //p[2] k     represents the decay constant of the exponential tail.
+  //           Requiring continuity of the function and its first derivative
+  //           implies that k is also the number of standard deviations on the side
+  //           of the tail where the Gaussian switches to the exponential. Should always be positive?
+  //p[3] normalization
   Double_t t = (x[0]-p[0])/p[1];
-  if (p[2] < 0) t = -t;
-  
-  Double_t absAlpha = fabs((Double_t)p[2]);
-  
-  if (t > -absAlpha) {
-    return p[4]*exp(-0.5*t*t);
+  //  if (t >= -fabs((Double_t)p[2])) {
+  if (t >= -p[2])) {
+    return p[3]*exp(-0.5*t*t);
   }
   else {
-    Double_t a =  TMath::Power(p[3]/absAlpha,p[3])*exp(-0.5*absAlpha*absAlpha);
-    Double_t b= p[3]/absAlpha - absAlpha;
-    
-    return p[4]*a/TMath::Power(b - t, p[3]);
+    return p[3]*exp(0.5*pow(p[2],2) + p[2]*t);
   }
   
 }
 
-double CrystalBall(double* x, double* par){ //http://en.wikipedia.org/wiki/Crystal_Ball_function
+Double_t ExpGaussExp (double *x, double *p ) {
+  //x[0] x
+  //p[0] mean  represents the mean of the Gaussian core
+  //p[1] sigma represents the standard deviation of the Gaussian core
+  //p[2] kL     represents the decay constant of the exponential tail.
+  //p[3] kH           Requiring continuity of the function and its first derivative
+  //           implies that k is also the number of standard deviations on the side
+  //           of the tail where the Gaussian switches to the exponential. Should always be positive?
+  //p[4] normalization
   
-  double xcur = x[0];
-  double mu = par[0];
-  double sigma = par[1];
-  double alpha = par[2];
-  double n = par[3];
-  double N = par[4];
   
+  Double_t t = (x[0]-p[0])/p[1];
+  Double_t retVal = 0.0;
   
-  //TF1* exp = new TF1("exp","exp(x)",1e-20,1e20);
-  double A; double B;
+  if (t <= -p[2])) {
+    retVal =  p[4]*exp(0.5*p[2]*p[2] + p[2]*t);
+  }
+  else if(-p[2] < t && t<= p[3]){
+    retVal = p[4]*exp(-0.5*t*t);
+  }
+  else if(p[3] < t){
+    retVal = p[4]*exp(0.5*p[3]*p[3] - p[3]*t);
+  }
+  else{
+    cout<<"PROBLEM "<<endl;
+    retVal = 0.0;
+  }
+  return retVal;
   
-  A =  TMath::Power((n/fabs(alpha)),n)*exp(-1.*fabs(alpha*alpha)/2.);
-  B = n/fabs(alpha) + fabs(alpha);
-  
-//  if (alpha < 0.){
-//    A = pow((n/fabs(alpha)),n)*exp(-1.*fabs(alpha*alpha)/2.);
-//    B = n/fabs(alpha) + fabs(alpha);
-//  }
-//  else {
-//    A = pow((n/alpha),n)*exp(-1.*alpha*alpha/2.);
-//    B = n/alpha - alpha;
-//  }
-  double f;
-  if ((xcur-mu)/sigma > (-1.)*alpha)
-    f = N*exp(-1.*(xcur-mu)*(xcur-mu)/ (2.*sigma*sigma));
-  else
-    f = N*A*TMath::Power((B- (xcur-mu)/sigma),(-1.*n));
-  //delete exp;
-  return f;
 }
-
 
 // Quadratic background function
 Double_t background(Double_t *x, Double_t *par) {
   return par[0] + par[1]*x[0] + par[2]*x[0]*x[0] + par[3]*x[0]*x[0]*x[0]; // + par[2]*x[0]*x[0] + par[3]*x[0]*x[0]*x[0]
-  
-
-  
-  
 }
 // Lorentzian Peak function
 Double_t lorentzianPeak(Double_t *x, Double_t *par) {
@@ -132,29 +89,14 @@ Double_t lorentzianPeak(Double_t *x, Double_t *par) {
 
 // Sum of background and peak function
 Double_t fitFunction(Double_t *x, Double_t *par) {
-  //return background(x,par) + lorentzianPeak(x,&par[3]);
-  //Int_t n =2;
-  //Chebyshev * cheb = new Chebyshev(n,0.0,0.1);
-//  TF1 * f1 = new TF1("f1",cheb,low,high,n+1,"Chebyshev");
-  return CBshape(x,par) + background(x,&par[5]);
-  //return CBshape(x,par) + cheb(x,&par[5]);
-
+  return ExpGaussExp(x,par);// + background(x,&par[5]);
 }
 
 
 
-void CBShape(TH1 *h33 , Double_t low, Double_t high, Double_t initialPar, Double_t width, Double_t alpha, Double_t n, Double_t factor, Int_t draw_opt){
+void CBAlternative(TH1 *h33 , Double_t low, Double_t high, Double_t initialPar, Double_t width, Double_t k_constant, Double_t factor, Int_t draw_opt){
   gStyle->SetOptFit(0);
   gStyle->SetOptStat(0);
-  
-  //void CBShape(){
-
-  //[0] -> m0
-  //[1] -> width
-  //[2] -> alpha
-  //[3] -> n
-  //[4] -> Normalization
-
   
   double nEnt = h33->GetMaximum();
   double nEnt_val = 10*nEnt;
@@ -163,23 +105,25 @@ void CBShape(TH1 *h33 , Double_t low, Double_t high, Double_t initialPar, Double
   for (int yval = 1 ; yval<=h33->GetNbinsX()/2; yval++) {
     if (h33->GetBinContent(yval) == 0. && h33->GetBinContent(yval+1) != 0.){ // && hslice->GetBinContent(yval+1) <0.025
       cout<< h33->GetBinCenter(yval-1)<<"  LIMITS "<<endl;
-      low = h33->GetBinCenter(yval-1);
+      newlow = h33->GetBinCenter(yval-1);
       
       break;
     }
   }
 
   
-  Double_t c_val = n/fabs(alpha)*exp(-0.5*fabs(alpha)*fabs(alpha));
-  Double_t d_val = sqrt(TMath::Pi()/2.)*(1.+TMath::Erf(fabs(alpha)/sqrt(2)));
-  //nEnt_val = nEnt_val/(width*(c_val*d_val));
+  TF1 *fitter = new TF1("fitter",fitFunction,low,high,9);//  [4] +[5]*x + [6]*x*x + [6]*x*x + [7]*x*x*x
   
-  TF1 *fitter = new TF1("fitter",fitFunction,newlow,high,9);//  [4] +[5]*x + [6]*x*x + [6]*x*x + [7]*x*x*x
-  //TF1 *fitter = new TF1("fitter",CBshape,newlow,high,5);//  [4] +[5]*x + [6]*x*x + [6]*x*x + [7]*x*x*x
-  
-  fitter->SetParameters(initialPar,width,alpha,n,nEnt);  fitter->SetParLimits(0,initialPar-2.*width,initialPar+2.*width); fitter->SetParLimits(4,nEnt_val/10.,nEnt_val);
-  fitter->SetParLimits(3,-1000,1000);
-  fitter->SetParLimits(6,1,100);
+  fitter->SetParameters(initialPar, width, k_constant,k_constant, nEnt);
+
+  //fitter->SetParLimits(0,initialPar-2.*width,initialPar+2.*width);
+  fitter->SetParLimits(2,-5.5,5.5);
+
+  fitter->SetParLimits(3,k_constant-0.5*k_constant,k_constant+0.5*k_constant);
+
+  fitter->SetParLimits(4,nEnt_val/10.,nEnt_val);
+  //fitter->SetParLimits(2,-1000,1000);
+  //fitter->SetParLimits(5,1,100);
   //fitter->SetParLimits(7,1,100);
   //fitter->SetParLimits(8,1,100);
   //fitter->SetParLimits(9,3,100);
@@ -189,22 +133,22 @@ void CBShape(TH1 *h33 , Double_t low, Double_t high, Double_t initialPar, Double
   h33->Draw("E");
   
   
-  TF1 *backFcn = new TF1("backFcn", background,newlow,high,4);
-  TF1 *signalFcn = new TF1("signalFcn", CBshape,newlow,high,5);
+  TF1 *backFcn = new TF1("backFcn", background,low,high,4);
+  TF1 *signalFcn = new TF1("signalFcn", ExpGaussExp,low,high,5);
   signalFcn->SetLineColor(2);
   signalFcn->SetLineWidth(2);
-  Double_t par[9];
+  Double_t par[8];
   fitter->GetParameters(par);
   backFcn->SetParameters(&par[5]);
   backFcn->SetLineStyle(2);
-  backFcn->SetLineColor(kCyan);
-  backFcn->SetLineWidth(3);
+  backFcn->SetLineColor(6);
+  backFcn->SetLineWidth(1);
   
   
   signalFcn->SetParameters(par);
   signalFcn->SetLineStyle(2);
   signalFcn->SetLineColor(4);
-  signalFcn->SetLineWidth(3);
+  signalFcn->SetLineWidth(1);
   
   
   //backFcn->Draw();
@@ -218,17 +162,19 @@ void CBShape(TH1 *h33 , Double_t low, Double_t high, Double_t initialPar, Double
   cout<<"$$$$$$$$$$$$$$$$$$$$"<<par[0]-factor*par[1]<<"  "<<par[0]+factor*par[1]<<"  "<<par[0]<<"  "<<par[1]<<endl;
   //h->Integral(h->FindBin(-1), h->FindBin(0) - 1)
   
-  TF1 *sigIntegralFcn = new TF1("sigIntegralFcn", CBshape,newlow,high,5);
+  TF1 *sigIntegralFcn = new TF1("sigIntegralFcn", ExpGaussExp,low,high,5);
   sigIntegralFcn->SetParameters(par);
   //sigIntegralFcn->SetFillStyle(3010);
-  //sigIntegralFcn->SetFillColor(kGreen);
+  sigIntegralFcn->SetFillColor(kGreen);
   //sigIntegralFcn->SetLineWidth(0.01);
 
 
-  signalFcn->Draw("same");
-  backFcn->Draw("same");
+  //sigIntegralFcn->Draw("same");
+  //signalFcn->Draw("same");
 
-  
+ // backFcn->Draw("same");
+
+  /*
   //Double_t Intg = abs(signalFcn->Integral(newlow,high));
   double num_Intg = 0.0;
   double num_Intb = 0.0;
@@ -314,6 +260,6 @@ void CBShape(TH1 *h33 , Double_t low, Double_t high, Double_t initialPar, Double
     
     
   }
-  
+  */
   
 }

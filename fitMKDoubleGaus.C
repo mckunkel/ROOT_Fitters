@@ -1,7 +1,7 @@
 
 //This is in the root directory and as of May 15 2012, is the final version
 
-void fitMKDoubleGaus(TH1F *h33 , Double_t low, Double_t high, Double_t p0, Double_t p1, Double_t p2, Double_t p3, Double_t initialPar, Double_t width, Double_t factor, Int_t draw_opt){
+void fitMKDoubleGaus(TH1 *h33 , Double_t low, Double_t high, Double_t p0, Double_t p1, Double_t p2, Double_t p3, Double_t initialPar, Double_t width, Double_t factor, Int_t draw_opt){
 
   double nEnt = h33->GetEntries();
   TF1 *fitter = new TF1("fitter","gaus(0) + gaus(3) + [6] + [7]*x + [8]*x*x + [9]*x*x*x",low,high);
