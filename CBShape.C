@@ -176,19 +176,26 @@ void CBShape(TH1 *h33 , Double_t low, Double_t high, Double_t initialPar, Double
   
   TF1 *fitter = new TF1("fitter",fitFunction,newlow,high,9);//  [4] +[5]*x + [6]*x*x + [6]*x*x + [7]*x*x*x
   //TF1 *fitter = new TF1("fitter",CBshape,newlow,high,5);//  [4] +[5]*x + [6]*x*x + [6]*x*x + [7]*x*x*x
-  
-  fitter->SetParameters(initialPar,width,alpha,n,nEnt);  fitter->SetParLimits(0,initialPar-2.*width,initialPar+2.*width); fitter->SetParLimits(4,nEnt_val/10.,nEnt_val);
-  fitter->SetParLimits(3,-1000,1000);
-  fitter->SetParLimits(6,1,100);
-  //fitter->SetParLimits(7,1,100);
-  //fitter->SetParLimits(8,1,100);
-  //fitter->SetParLimits(9,3,100);
+  cout<<"HIGH VALUE = "<<high<<endl;
+  fitter->SetParameters(initialPar,width,alpha,n,nEnt);
+  fitter->SetParLimits(0,initialPar-2.*width,initialPar+2.*width);
+  fitter->SetParLimits(4,nEnt_val/10.,nEnt_val);
+  //fitter->SetParLimits(3,-1000,1000);
+  fitter->SetParLimits(6,-1000,100);
+  fitter->SetParLimits(7,-1000,100);
+  fitter->SetParLimits(8,-1000,100);
+  //fitter->SetParLimits(9,-1000,100);
 
   
-  h33->Fit("fitter","REM","same");
+  //h33->Fit("fitter","REM","same");
+  //TFitResultPtr s = h33->Fit("fitter","REM","same");
+  TFitResultPtr s = h33->Fit("fitter","SQ","goff");
+  s->Print("V");
+//  TMatrixDSym m = s->GetCovarianceMatrix();
+//  std::cout<<"s matrix properties "<<s->GetCovarianceMatrix().GetNrows()<<'\t'<<s->GetCovarianceMatrix().GetNcols()<<std::endl;
+//  std::cout<<"m matrix properties "<<m.GetNrows()<<'\t'<<m.GetNcols()<<std::endl;
   h33->Draw("E");
-  
-  
+
   TF1 *backFcn = new TF1("backFcn", background,newlow,high,4);
   TF1 *signalFcn = new TF1("signalFcn", CBshape,newlow,high,5);
   signalFcn->SetLineColor(2);
@@ -225,9 +232,10 @@ void CBShape(TH1 *h33 , Double_t low, Double_t high, Double_t initialPar, Double
   //sigIntegralFcn->SetLineWidth(0.01);
 
 
-  signalFcn->Draw("same");
-  backFcn->Draw("same");
+  //signalFcn->Draw("same");
+  //backFcn->Draw("same");
 
+  
   
   //Double_t Intg = abs(signalFcn->Integral(newlow,high));
   double num_Intg = 0.0;
